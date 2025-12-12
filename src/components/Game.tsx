@@ -172,10 +172,14 @@ export default function Game() {
 
     if (aliveTeams.length === 1) {
       setWinningTeam(aliveTeams[0]);
-      setGameState("finished");
+      setTimeout(() => {
+        setGameState("finished");
+      }, 1500);
     } else if (aliveTeams.length === 0) {
       // All teams died (unlikely but possible)
-      setGameState("finished");
+      setTimeout(() => {
+        setGameState("finished");
+      }, 1500);
     }
   }, [teamStats, gameState]);
 

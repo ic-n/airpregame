@@ -16,7 +16,7 @@ export const createScene = (): THREE.Scene => {
 
 const addGrid = (scene: THREE.Scene): void => {
   const gridHelper = new THREE.GridHelper(
-    CONFIG.WORLD.GRID_SIZE * 2,
+    CONFIG.WORLD.GRID_SIZE,
     20,
     0x888888,
     0x444444

@@ -89,23 +89,24 @@ const handleLivingEntity = (
   if (distance >= CONFIG.ENTITY.RETARGET_DISTANCE_THRESHOLD) return;
 
   if (Math.random() < CONFIG.ENTITY.RETARGET_PROBABILITY) {
-    const targetId = getRandomLivingEntity(
-      entities,
-      Health,
-      CONFIG.HEALTH.DEAD
-    );
-    if (targetId !== eid) {
-      Target.x[eid] = Position.x[targetId];
-      Target.y[eid] = Position.y[targetId];
-      Target.z[eid] = Position.z[targetId];
+    // Pick random entity, reroll if it's dead
+    const gen = () => {
+      const at = Math.round(Math.random() * (entities.length - 1));
+      return entities[at];
+    };
+
+    let destId = gen();
+    while (eid !== destId && Health.Value[destId] === 0) {
+      destId = gen();
     }
+
+    Target.x[eid] = Position.x[destId];
+    Target.y[eid] = Position.y[destId];
+    Target.z[eid] = Position.z[destId];
   } else {
-    Target.x[eid] = randomPosition(CONFIG.WORLD.BOUNDS);
-    Target.y[eid] = randomInRange(
-      CONFIG.WORLD.MIN_HEIGHT,
-      CONFIG.WORLD.MAX_HEIGHT
-    );
-    Target.z[eid] = randomPosition(CONFIG.WORLD.BOUNDS);
+    Target.x[eid] = (Math.random() - 0.5) * 10;
+    Target.y[eid] = Math.random() * 10;
+    Target.z[eid] = (Math.random() - 0.5) * 10;
   }
 };
 

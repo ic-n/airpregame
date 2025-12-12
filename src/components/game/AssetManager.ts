@@ -34,7 +34,6 @@ export class AssetManager {
 
   private applyTeamColor(model: THREE.Group, team: TeamId): void {
     const teamColor = new THREE.Color(CONFIG.TEAMS.COLORS[team]);
-    const targetColor = CONFIG.ASSETS.TARGET_MATERIAL_COLOR;
 
     model.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
@@ -48,8 +47,23 @@ export class AssetManager {
             mat instanceof THREE.MeshStandardMaterial ||
             mat instanceof THREE.MeshBasicMaterial
           ) {
-            if (colorEquals(mat.color.getHex(), targetColor)) {
+            if (
+              colorEquals(
+                mat.color.getHex(),
+                CONFIG.ASSETS.TARGET_MATERIAL_COLOR_A
+              )
+            ) {
               mat.color.copy(teamColor);
+            }
+            if (
+              colorEquals(
+                mat.color.getHex(),
+                CONFIG.ASSETS.TARGET_MATERIAL_COLOR_B
+              )
+            ) {
+              mat.color.copy(
+                teamColor.clone().lerp(new THREE.Color().setHSL(0, 1, 1), 0.15)
+              );
             }
           }
         });

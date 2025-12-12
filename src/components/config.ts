@@ -12,7 +12,7 @@ export const CONFIG = {
   // Camera settings
   CAMERA: {
     FOV: 45,
-    DISTANCE: 70,
+    DISTANCE: 50,
     IDLE_TIMEOUT: 2000,
     ROTATION_SPEED: 0.001,
     DRAG_SENSITIVITY: 0.005,
@@ -26,11 +26,11 @@ export const CONFIG = {
   // Entity settings
   ENTITY: {
     INITIAL_COUNT: 20,
-    SCALE: 1,
-    COLLISION_DISTANCE: 2,
+    SCALE: 0.15,
+    COLLISION_DISTANCE: 1,
     MOVEMENT_EASE: 0.015,
-    RETARGET_PROBABILITY: 0.4,
-    RETARGET_DISTANCE_THRESHOLD: 0.5,
+    RETARGET_PROBABILITY: 0.35, // Original value
+    RETARGET_DISTANCE_THRESHOLD: 0.01, // Original value
   },
 
   // Animation settings
@@ -54,9 +54,9 @@ export const CONFIG = {
 
   // Visual settings
   VISUAL: {
-    BACKGROUND_COLOR: 0x87ceeb, // Sky blue
-    FOG_NEAR: 20,
-    FOG_FAR: 100,
+    BACKGROUND_COLOR: 0x0000000, // Sky blue
+    FOG_NEAR: 30,
+    FOG_FAR: 70,
     DEAD_COLOR: 0x333333,
     AMBIENT_LIGHT: { color: 0xffffff, intensity: 0.6 },
     DIRECTIONAL_LIGHT: {
@@ -74,7 +74,15 @@ export const CONFIG = {
   // Asset settings
   ASSETS: {
     MODEL_PATH: "/Hot Air Balloon.glb",
-    TARGET_MATERIAL_COLOR: 0xff0000, // Only recolor red materials
+    TARGET_MATERIAL_COLOR_A: 0x009be6,
+    TARGET_MATERIAL_COLOR_B: 0xf53f30,
+    // model values
+    // 0x009be6 - blue stripes of airbaloon
+    // 0xf53f30 - red stripes of airbaloon
+    // 0xff5519 - red gas container basket parts
+    // 0x455965 - blue gas container basket parts
+    // 0x795545 - dark brown basket parts
+    // 0xffcd89 - light brown basket parts
   },
 
   // Health settings

@@ -220,7 +220,8 @@ export const createCameraSystem = (
   camera: THREE.PerspectiveCamera,
   isDraggingRef: React.MutableRefObject<boolean>,
   cameraAngleRef: React.MutableRefObject<CameraAngles>,
-  lastInteractionRef: React.MutableRefObject<number>
+  lastInteractionRef: React.MutableRefObject<number>,
+  cameraDistanceRef: React.MutableRefObject<number>
 ): System => {
   return () => {
     const timeSinceInteraction = Date.now() - lastInteractionRef.current;
@@ -230,16 +231,17 @@ export const createCameraSystem = (
       cameraAngleRef.current.theta += CONFIG.CAMERA.ROTATION_SPEED;
     }
 
-    updateCameraPosition(camera, cameraAngleRef.current);
+    updateCameraPosition(camera, cameraAngleRef.current, cameraDistanceRef);
   };
 };
 
 const updateCameraPosition = (
   camera: THREE.PerspectiveCamera,
-  angles: CameraAngles
+  angles: CameraAngles,
+  cameraDistanceRef: React.MutableRefObject<number>
 ): void => {
   const { theta, phi } = angles;
-  const radius = CONFIG.CAMERA.DISTANCE;
+  const radius = cameraDistanceRef.current;
 
   const x = radius * Math.sin(phi) * Math.cos(theta);
   const y = radius * Math.cos(phi);

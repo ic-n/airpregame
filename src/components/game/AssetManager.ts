@@ -62,7 +62,7 @@ export class AssetManager {
               )
             ) {
               mat.color.copy(
-                teamColor.clone().lerp(new THREE.Color().setHSL(0, 1, 1), 0.15)
+                teamColor.clone().lerp(new THREE.Color().setHSL(0, 1, 1), 0.4)
               );
             }
           }

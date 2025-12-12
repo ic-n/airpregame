@@ -23,7 +23,6 @@ import { createEntity, destroyEntity } from "./game/entity";
 import "../styles/global.css";
 
 export default function Game() {
-  const [entityCount, setEntityCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +41,7 @@ export default function Game() {
     phi: CONFIG.CAMERA.INITIAL_PHI,
   });
   const lastInteractionRef = useRef(Date.now());
+  const cameraDistanceRef = useRef(CONFIG.CAMERA.DISTANCE);
 
   // Initialize game
   useEffect(() => {
@@ -73,7 +73,8 @@ export default function Game() {
         camera,
         isDraggingRef,
         cameraAngleRef,
-        lastInteractionRef
+        lastInteractionRef,
+        cameraDistanceRef
       ),
     ];
 
@@ -82,7 +83,8 @@ export default function Game() {
       isDraggingRef,
       previousMouseRef,
       cameraAngleRef,
-      lastInteractionRef
+      lastInteractionRef,
+      cameraDistanceRef
     );
     const cleanupInput = attachInputHandlers(
       renderer.domElement,
@@ -131,8 +133,6 @@ export default function Game() {
       entitiesRef,
       (team: TeamId) => assetManagerRef.current.loadBalloonModel(team)
     );
-
-    setEntityCount((prev) => prev + 1);
   };
 
   // Add initial entities
@@ -159,28 +159,27 @@ export default function Game() {
         </div>
       )}
 
-      <div className="fixed top-4 left-4 z-10 bg-black/80 text-white p-4 rounded backdrop-blur-sm">
-        <div className="mb-4">
-          <div className="text-lg font-bold mb-2">Hot Air Balloon Battle</div>
-          <div className="text-sm mb-1">
-            <span className="inline-block w-3 h-3 bg-red-500 mr-2"></span>
-            Red Team vs
-            <span className="inline-block w-3 h-3 bg-blue-500 mx-2"></span>
-            Blue Team
-          </div>
-          <div className="text-sm">Active Balloons: {entityCount}</div>
+      <div className="fixed top-4 left-4 z-10 bg-neutral-800 text-white px-4 py-2 rounded backdrop-blur-sm">
+        <div>
+          <div className="text-lg font-bold mb-2">Storm Protocol</div>
+          {Object.entries(CONFIG.TEAMS.COLORS).map(([id, color]) => (
+            <div className="text-sm mb-1">
+              <span
+                className="inline-block w-3 h-3 mr-2"
+                style={{
+                  backgroundColor: "#" + color.toString(16),
+                }}
+              ></span>
+              Team {id}
+              <div className="text-sm ">...other stats</div>
+            </div>
+          ))}
         </div>
-        <button
-          onClick={addBalloon}
-          className="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-        >
-          Add Balloon
-        </button>
       </div>
 
-      <div className="fixed bottom-4 left-4 z-10 bg-black/80 text-white p-3 rounded backdrop-blur-sm text-xs">
-        <div>🖱️ Drag to rotate camera</div>
-        <div>🎈 Balloons fight when they collide</div>
+      <div className="fixed bottom-4 left-4 z-10 bg-neutral-800 text-white px-3 py-2 rounded backdrop-blur-sm text-xs">
+        <div>- Drag to rotate camera</div>
+        <div>- Balloons fight when they collide</div>
       </div>
     </>
   );

@@ -75,6 +75,7 @@ export interface InputHandlers {
   handleTouchStart: (e: TouchEvent) => void;
   handleTouchMove: (e: TouchEvent) => void;
   handleTouchEnd: () => void;
+  handleWheel: (e: WheelEvent) => void;
 }
 
 // Asset types

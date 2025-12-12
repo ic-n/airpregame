@@ -19,13 +19,13 @@ export const CONFIG = {
     INITIAL_PHI: Math.PI / 3,
     INITIAL_THETA: 0,
     MIN_PHI: 0.1,
-    MAX_PHI: Math.PI - 0.1,
+    MAX_PHI: Math.PI * 0.6 - 0.1,
     LOOK_AT_Y: 10,
   },
 
   // Entity settings
   ENTITY: {
-    INITIAL_COUNT: 20,
+    INITIAL_COUNT: 4 * 8,
     SCALE: 0.15,
     COLLISION_DISTANCE: 1,
     MOVEMENT_EASE: 0.015,
@@ -46,29 +46,33 @@ export const CONFIG = {
 
   // Team settings
   TEAMS: {
-    COUNT: 2,
+    COUNT: 4,
     COLORS: {
-      1: 0x7b19e9,
-      2: 0xe4de14,
+      1: 0xff6188,
+      2: 0xfc9867,
+      //2: 0xffd866,
+      //2: 0xa9dc76,
+      3: 0x78dce8,
+      4: 0xab9df2,
     },
   },
 
   // Visual settings
   VISUAL: {
-    BACKGROUND_COLOR: 0x333333,
+    BACKGROUND_COLOR: 0x171717,
     FOG_NEAR: 25,
     FOG_FAR: 65,
-    FOG_COLOR: 0x333333,
-    AMBIENT_LIGHT: { color: 0x444444, intensity: 7 },
+    FOG_COLOR: 0x171717,
+    AMBIENT_LIGHT: { color: 0x444444, intensity: 10 },
     DIRECTIONAL_LIGHT: {
       color: 0xffffff,
       intensity: 5,
       position: [10, 30, 10],
     },
     HEMISPHERE_LIGHT: {
-      skyColor: 0x5a7fb8,
-      groundColor: 0x1a0f2e,
-      intensity: 30,
+      skyColor: 0xffffff,
+      groundColor: 0x000000,
+      intensity: 1,
     },
   },
 
@@ -94,4 +98,4 @@ export const CONFIG = {
   },
 };
 
-export type TeamId = 1 | 2;
+export type TeamId = 1 | 2 | 3 | 4;

@@ -48,7 +48,9 @@ export const createEntity = async (
   loadModel: (team: TeamId) => Promise<THREE.Group>
 ): Promise<number> => {
   const eid = addEntity(world);
-  const team: TeamId = Math.random() > 0.5 ? 2 : 1;
+  const team: TeamId = Math.round(
+    Math.random() * (CONFIG.TEAMS.COUNT - 1) + 1
+  ) as TeamId;
 
   const { startX, startY, startZ } = createEntityComponents(world, eid, team);
 

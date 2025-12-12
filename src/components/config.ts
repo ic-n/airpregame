@@ -29,8 +29,8 @@ export const CONFIG = {
     SCALE: 0.15,
     COLLISION_DISTANCE: 1,
     MOVEMENT_EASE: 0.015,
-    RETARGET_PROBABILITY: 0.35, // Original value
-    RETARGET_DISTANCE_THRESHOLD: 0.01, // Original value
+    RETARGET_PROBABILITY: 0.35,
+    RETARGET_DISTANCE_THRESHOLD: 0.01,
     PARTICLES_COUNT: 4800,
   },
 
@@ -48,36 +48,35 @@ export const CONFIG = {
   TEAMS: {
     COUNT: 2,
     COLORS: {
-      1: 0xff4444, // Red
-      2: 0x4444ff, // Blue
+      1: 0x7b19e9,
+      2: 0xe4de14,
     },
   },
 
   // Visual settings
   VISUAL: {
-    BACKGROUND_COLOR: 0x000000, // Dark stormy sky
-    FOG_NEAR: 30,
-    FOG_FAR: 70,
-    FOG_COLOR: 0x111111, // Dark gray fog
-    DEAD_COLOR: 0x11111,
-    AMBIENT_LIGHT: { color: 0xffffff, intensity: 1 },
+    BACKGROUND_COLOR: 0x333333,
+    FOG_NEAR: 25,
+    FOG_FAR: 65,
+    FOG_COLOR: 0x333333,
+    AMBIENT_LIGHT: { color: 0x444444, intensity: 7 },
     DIRECTIONAL_LIGHT: {
       color: 0xffffff,
-      intensity: 0.4,
+      intensity: 5,
       position: [10, 30, 10],
     },
     HEMISPHERE_LIGHT: {
-      skyColor: 0xffffff,
-      groundColor: 0x000000,
-      intensity: 1,
+      skyColor: 0x5a7fb8,
+      groundColor: 0x1a0f2e,
+      intensity: 30,
     },
   },
 
   // Asset settings
   ASSETS: {
     MODEL_PATH: "/Hot Air Balloon.glb",
-    TARGET_MATERIAL_COLOR_A: 0x009be6,
-    TARGET_MATERIAL_COLOR_B: 0xf53f30,
+    TARGET_MATERIAL_COLOR_A: 0x009be6, // do not touch
+    TARGET_MATERIAL_COLOR_B: 0xf53f30, // do not touch
     // model values
     // 0x009be6 - blue stripes of airbaloon
     // 0xf53f30 - red stripes of airbaloon
@@ -91,7 +90,7 @@ export const CONFIG = {
   HEALTH: {
     INITIAL: 1,
     DEAD: 0,
-    FALL_TARGET_Y: -2,
+    FALL_TARGET_Y: -20,
   },
 };
 

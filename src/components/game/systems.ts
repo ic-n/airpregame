@@ -72,7 +72,7 @@ const handleDeadEntity = (
         ? child.material
         : [child.material];
       materials.forEach((mat) => {
-        mat.color.lerp(new THREE.Color(CONFIG.VISUAL.DEAD_COLOR), 0.1);
+        mat.color.lerp(new THREE.Color(CONFIG.VISUAL.BACKGROUND_COLOR), 0.5);
       });
     }
   });

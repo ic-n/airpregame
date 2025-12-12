@@ -4,6 +4,7 @@ import { CONFIG, type TeamId } from "./config";
 import type { CameraAngles, MousePosition, EntityData } from "./types";
 import { initializeWorld } from "./game/world";
 import { AssetManager } from "./game/AssetManager";
+import { HurricaneBackground } from "./game/HurricaneBackground";
 import {
   createScene,
   createLighting,
@@ -32,6 +33,7 @@ export default function Game() {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const entitiesRef = useRef<Map<number, EntityData>>(new Map());
   const assetManagerRef = useRef<AssetManager>(new AssetManager());
+  const hurricaneRef = useRef<HurricaneBackground | null>(null);
 
   const isDraggingRef = useRef(false);
   const previousMouseRef = useRef<MousePosition>({ x: 0, y: 0 });
@@ -51,6 +53,9 @@ export default function Game() {
     const scene = createScene();
     sceneRef.current = scene;
     createLighting(scene);
+
+    const hurricane = new HurricaneBackground(scene);
+    hurricaneRef.current = hurricane;
 
     const camera = createCamera();
     cameraRef.current = camera;
@@ -88,6 +93,9 @@ export default function Game() {
     const animate = () => {
       requestAnimationFrame(animate);
       systems.forEach((system) => system());
+      if (hurricaneRef.current) {
+        hurricaneRef.current.update(world.time.delta);
+      }
       renderer.render(scene, camera);
     };
     animate();
@@ -104,6 +112,9 @@ export default function Game() {
       entitiesRef.current.forEach((_, eid) =>
         destroyEntity(eid, scene, entitiesRef)
       );
+      if (hurricaneRef.current) {
+        hurricaneRef.current.dispose();
+      }
       assetManagerRef.current.dispose();
       containerRef.current?.removeChild(renderer.domElement);
       renderer.dispose();

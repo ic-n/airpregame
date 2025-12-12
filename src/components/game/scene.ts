@@ -5,7 +5,7 @@ export const createScene = (): THREE.Scene => {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(CONFIG.VISUAL.BACKGROUND_COLOR);
   scene.fog = new THREE.Fog(
-    CONFIG.VISUAL.BACKGROUND_COLOR,
+    CONFIG.VISUAL.FOG_COLOR,
     CONFIG.VISUAL.FOG_NEAR,
     CONFIG.VISUAL.FOG_FAR
   );
@@ -18,8 +18,8 @@ const addGrid = (scene: THREE.Scene): void => {
   const gridHelper = new THREE.GridHelper(
     CONFIG.WORLD.GRID_SIZE,
     20,
-    0x888888,
-    0x444444
+    0x353535,
+    0x333333
   );
   gridHelper.position.y = 0;
   scene.add(gridHelper);

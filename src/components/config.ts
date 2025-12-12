@@ -31,6 +31,7 @@ export const CONFIG = {
     MOVEMENT_EASE: 0.015,
     RETARGET_PROBABILITY: 0.35, // Original value
     RETARGET_DISTANCE_THRESHOLD: 0.01, // Original value
+    PARTICLES_COUNT: 4800,
   },
 
   // Animation settings
@@ -54,20 +55,21 @@ export const CONFIG = {
 
   // Visual settings
   VISUAL: {
-    BACKGROUND_COLOR: 0x0000000, // Sky blue
+    BACKGROUND_COLOR: 0x000000, // Dark stormy sky
     FOG_NEAR: 30,
     FOG_FAR: 70,
-    DEAD_COLOR: 0x333333,
-    AMBIENT_LIGHT: { color: 0xffffff, intensity: 0.6 },
+    FOG_COLOR: 0x111111, // Dark gray fog
+    DEAD_COLOR: 0x11111,
+    AMBIENT_LIGHT: { color: 0xffffff, intensity: 1 },
     DIRECTIONAL_LIGHT: {
       color: 0xffffff,
-      intensity: 0.8,
-      position: [10, 20, 10],
+      intensity: 0.4,
+      position: [10, 30, 10],
     },
     HEMISPHERE_LIGHT: {
       skyColor: 0xffffff,
-      groundColor: 0x444444,
-      intensity: 0.4,
+      groundColor: 0x000000,
+      intensity: 1,
     },
   },
 

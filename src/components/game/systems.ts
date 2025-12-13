@@ -150,6 +150,8 @@ export const createCollisionSystem = (
   onKill?: (
     killerTeam: number,
     victimTeam: number,
+    killerName: string,
+    victimName: string,
     position: { x: number; y: number; z: number }
   ) => void,
   onCollision?: (
@@ -210,6 +212,8 @@ const handleCollision = (
   onKill?: (
     killerTeam: number,
     victimTeam: number,
+    killerName: string,
+    victimName: string,
     position: { x: number; y: number; z: number }
   ) => void,
   onCollision?: (
@@ -240,7 +244,14 @@ const handleCollision = (
   if (wasAlive && Health.Value[loser] === CONFIG.HEALTH.DEAD && onKill) {
     const killerTeam = Team.Value[winner];
     const victimTeam = Team.Value[loser];
-    onKill(killerTeam, victimTeam, collisionPos);
+
+    const killerData = entitiesRef.current.get(winner);
+    const victimData = entitiesRef.current.get(loser);
+
+    const killerName = killerData?.balloonName || "Unknown";
+    const victimName = victimData?.balloonName || "Unknown";
+
+    onKill(killerTeam, victimTeam, killerName, victimName, collisionPos);
   }
 };
 

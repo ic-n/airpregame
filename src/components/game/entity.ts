@@ -45,7 +45,8 @@ export const createEntity = async (
   world: World,
   scene: THREE.Scene,
   entitiesRef: React.MutableRefObject<Map<number, EntityData>>,
-  loadModel: (team: TeamId) => Promise<THREE.Group>
+  loadModel: (team: TeamId) => Promise<THREE.Group>,
+  balloonIndex: number
 ): Promise<number> => {
   const eid = addEntity(world);
   const team: TeamId = Math.round(
@@ -58,11 +59,16 @@ export const createEntity = async (
   model.position.set(startX, startY, startZ);
   scene.add(model);
 
+  // Assign balloon name based on creation order
+  const balloonName =
+    CONFIG.BALLOON_NAMES[balloonIndex % CONFIG.BALLOON_NAMES.length];
+
   const entityData: EntityData = {
     group: model,
     originalY: startY,
     timeOffset: Math.random() * Math.PI * 2,
     lastDamageTime: 0,
+    balloonName: balloonName,
   };
 
   entitiesRef.current.set(eid, entityData);

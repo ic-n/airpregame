@@ -43,6 +43,7 @@ export interface EntityData {
   originalY: number;
   timeOffset: number;
   lastDamageTime: number;
+  balloonName: string;
 }
 
 export interface EntityPosition {
@@ -88,6 +89,8 @@ export interface KillFeedEntry {
   id: string;
   killerTeam: number;
   victimTeam: number;
+  killerName: string;
+  victimName: string;
   timestamp: number;
 }
 

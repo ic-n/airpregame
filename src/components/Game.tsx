@@ -79,6 +79,8 @@ export default function Game() {
   const handleKill = (
     killerTeam: number,
     victimTeam: number,
+    killerName: string,
+    victimName: string,
     position: { x: number; y: number; z: number }
   ) => {
     // Add to kill feed
@@ -86,6 +88,8 @@ export default function Game() {
       id: `${Date.now()}-${Math.random()}`,
       killerTeam,
       victimTeam,
+      killerName,
+      victimName,
       timestamp: Date.now(),
     };
 
@@ -243,15 +247,15 @@ export default function Game() {
     };
   }, []);
 
-  // Add entity
-  const addBalloon = async () => {
+  const addBalloon = async (num: number) => {
     if (!worldRef.current || !sceneRef.current) return;
 
     const eid = await createEntity(
       worldRef.current,
       sceneRef.current,
       entitiesRef,
-      (team: TeamId) => assetManagerRef.current.loadBalloonModel(team)
+      (team: TeamId) => assetManagerRef.current.loadBalloonModel(team),
+      num
     );
   };
 
@@ -259,10 +263,10 @@ export default function Game() {
   useEffect(() => {
     if (!isLoading) {
       const addInitialEntities = async () => {
-        const promises = Array.from(
-          { length: CONFIG.ENTITY.INITIAL_COUNT },
-          () => addBalloon()
-        );
+        const promises = [];
+        for (let i = 0; i < CONFIG.ENTITY.INITIAL_COUNT; i++) {
+          promises.push(addBalloon(i));
+        }
         await Promise.all(promises);
       };
       addInitialEntities();
@@ -335,13 +339,14 @@ export default function Game() {
               Storm Protocol
             </h1>
             <p className="text-neutral-400 text-center mb-6">
-              Pick your team and watch the battle unfold
+              Pick your syndicate and watch the battle unfold
             </p>
 
             <div className="space-y-3 mb-6">
               {Object.entries(CONFIG.TEAMS.COLORS).map(([id, color]) => {
                 const teamId = parseInt(id) as TeamId;
                 const isSelected = selectedTeam === teamId;
+                const syndicateName = CONFIG.TEAMS.NAMES[teamId];
                 return (
                   <button
                     key={id}
@@ -360,7 +365,9 @@ export default function Game() {
                             "#" + color.toString(16).padStart(6, "0"),
                         }}
                       ></span>
-                      <span className="text-xl font-bold">Team {id}</span>
+                      <span className="text-xl font-bold">
+                        {syndicateName} Syndicate
+                      </span>
                       {isSelected && (
                         <span className="ml-auto text-green-400">✓</span>
                       )}
@@ -379,7 +386,7 @@ export default function Game() {
                   : "bg-neutral-700 text-neutral-500 cursor-not-allowed"
               }`}
             >
-              {selectedTeam ? "Start Battle" : "Select a Team"}
+              {selectedTeam ? "Start Battle" : "Select a Syndicate"}
             </button>
           </div>
         </div>
@@ -391,9 +398,10 @@ export default function Game() {
           <div>
             <div className="text-lg font-bold mb-2">Storm Protocol</div>
             {Object.entries(CONFIG.TEAMS.COLORS).map(([id, color]) => {
-              const teamId = parseInt(id);
+              const teamId = parseInt(id) as TeamId;
               const alive = teamStats[teamId] || 0;
               const isYourTeam = teamId === selectedTeam;
+              const syndicateName = CONFIG.TEAMS.NAMES[teamId];
               return (
                 <div
                   key={id}
@@ -410,7 +418,7 @@ export default function Game() {
                       }}
                     ></span>
                     <span>
-                      Team {id}
+                      {syndicateName}
                       {isYourTeam && (
                         <span className="ml-1 text-green-400 text-xs">★</span>
                       )}
@@ -455,7 +463,7 @@ export default function Game() {
                           }}
                         ></span>
                         <span className="text-neutral-300 font-bold">
-                          Team {entry.killerTeam}
+                          {entry.killerName}
                         </span>
                         <span className="text-neutral-500 text-[10px]">→</span>
                         <span
@@ -466,7 +474,7 @@ export default function Game() {
                           }}
                         ></span>
                         <span className="text-neutral-400">
-                          Team {entry.victimTeam}
+                          {entry.victimName}
                         </span>
                       </div>
                     );
@@ -514,7 +522,7 @@ export default function Game() {
 
                 <div className="bg-neutral-700 p-4 rounded-lg mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-neutral-400">Your Team:</span>
+                    <span className="text-neutral-400">Your Syndicate:</span>
                     <div className="flex items-center gap-2">
                       <span
                         className="w-4 h-4 rounded"
@@ -526,7 +534,9 @@ export default function Game() {
                               .padStart(6, "0"),
                         }}
                       ></span>
-                      <span className="font-bold">Team {selectedTeam}</span>
+                      <span className="font-bold">
+                        {CONFIG.TEAMS.NAMES[selectedTeam!]}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
@@ -542,7 +552,9 @@ export default function Game() {
                               .padStart(6, "0"),
                         }}
                       ></span>
-                      <span className="font-bold">Team {winningTeam}</span>
+                      <span className="font-bold">
+                        {CONFIG.TEAMS.NAMES[winningTeam]}
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
 import { CONFIG, type TeamId } from "./config";
-import type { CameraAngles, MousePosition, EntityData } from "./types";
+import type {
+  CameraAngles,
+  MousePosition,
+  EntityData,
+  KillFeedEntry,
+} from "./types";
 import { initializeWorld } from "./game/world";
 import { AssetManager } from "./game/AssetManager";
 import { HurricaneBackground } from "./game/HurricaneBackground";
+import { ExplosionSystem } from "./game/explosion";
 import {
   createScene,
   createLighting,
@@ -36,6 +42,7 @@ export default function Game() {
     3: 0,
     4: 0,
   });
+  const [killFeed, setKillFeed] = useState<KillFeedEntry[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<ReturnType<typeof initializeWorld> | null>(null);
@@ -45,6 +52,7 @@ export default function Game() {
   const entitiesRef = useRef<Map<number, EntityData>>(new Map());
   const assetManagerRef = useRef<AssetManager>(new AssetManager());
   const hurricaneRef = useRef<HurricaneBackground | null>(null);
+  const explosionRef = useRef<ExplosionSystem | null>(null);
 
   const isDraggingRef = useRef(false);
   const previousMouseRef = useRef<MousePosition>({ x: 0, y: 0 });
@@ -54,6 +62,69 @@ export default function Game() {
   });
   const lastInteractionRef = useRef(Date.now());
   const cameraDistanceRef = useRef(CONFIG.CAMERA.DISTANCE);
+  const cameraShakeRef = useRef({ intensity: 0, duration: 0, elapsed: 0 });
+  const killCamRef = useRef<{
+    active: boolean;
+    targetPos: THREE.Vector3 | null;
+    startTime: number;
+    originalDistance: number;
+  }>({
+    active: false,
+    targetPos: null,
+    startTime: 0,
+    originalDistance: CONFIG.CAMERA.DISTANCE,
+  });
+
+  // Handle kill event
+  const handleKill = (
+    killerTeam: number,
+    victimTeam: number,
+    position: { x: number; y: number; z: number }
+  ) => {
+    // Add to kill feed
+    const newEntry: KillFeedEntry = {
+      id: `${Date.now()}-${Math.random()}`,
+      killerTeam,
+      victimTeam,
+      timestamp: Date.now(),
+    };
+
+    setKillFeed((prev) => {
+      const updated = [newEntry, ...prev].slice(
+        0,
+        CONFIG.KILL_FEED.MAX_ENTRIES
+      );
+      return updated;
+    });
+
+    // Trigger camera shake
+    cameraShakeRef.current = {
+      intensity: CONFIG.CAMERA_SHAKE.INTENSITY,
+      duration: CONFIG.CAMERA_SHAKE.DURATION,
+      elapsed: 0,
+    };
+  };
+
+  // Handle collision (for explosions)
+  const handleCollision = (
+    position: { x: number; y: number; z: number },
+    color: number
+  ) => {
+    if (explosionRef.current) {
+      const pos = new THREE.Vector3(position.x, position.y, position.z);
+      explosionRef.current.createExplosion(pos, color);
+    }
+  };
+
+  // Activate kill cam
+  const activateKillCam = (position: { x: number; y: number; z: number }) => {
+    killCamRef.current = {
+      active: true,
+      targetPos: new THREE.Vector3(position.x, position.y, position.z),
+      startTime: Date.now(),
+      originalDistance: cameraDistanceRef.current,
+    };
+  };
 
   // Initialize game
   useEffect(() => {
@@ -69,6 +140,9 @@ export default function Game() {
     const hurricane = new HurricaneBackground(scene);
     hurricaneRef.current = hurricane;
 
+    const explosion = new ExplosionSystem(scene);
+    explosionRef.current = explosion;
+
     const camera = createCamera();
     cameraRef.current = camera;
 
@@ -80,14 +154,15 @@ export default function Game() {
     const systems = [
       createTimeSystem(world),
       createMovementSystem(world, entitiesRef),
-      createCollisionSystem(world, entitiesRef),
+      createCollisionSystem(world, entitiesRef, handleKill, handleCollision),
       createStatsSystem(world, setTeamStats),
       createCameraSystem(
         camera,
         isDraggingRef,
         cameraAngleRef,
         lastInteractionRef,
-        cameraDistanceRef
+        cameraDistanceRef,
+        cameraShakeRef
       ),
     ];
 
@@ -111,6 +186,35 @@ export default function Game() {
       if (hurricaneRef.current) {
         hurricaneRef.current.update(world.time.delta);
       }
+      if (explosionRef.current) {
+        explosionRef.current.update(world.time.delta);
+      }
+
+      // Handle kill cam
+      if (
+        killCamRef.current.active &&
+        killCamRef.current.targetPos &&
+        cameraRef.current
+      ) {
+        const elapsed = Date.now() - killCamRef.current.startTime;
+        const progress = Math.min(elapsed / CONFIG.KILL_CAM.DURATION, 1);
+
+        // Smooth zoom in
+        const targetDistance =
+          killCamRef.current.originalDistance - CONFIG.KILL_CAM.ZOOM_AMOUNT;
+        cameraDistanceRef.current =
+          killCamRef.current.originalDistance -
+          (killCamRef.current.originalDistance - targetDistance) * progress;
+
+        // Look at kill position
+        const lookAtY = killCamRef.current.targetPos.y;
+        cameraRef.current.lookAt(0, lookAtY, 0);
+
+        if (progress >= 1) {
+          killCamRef.current.active = false;
+        }
+      }
+
       renderer.render(scene, camera);
     };
     animate();
@@ -129,6 +233,9 @@ export default function Game() {
       );
       if (hurricaneRef.current) {
         hurricaneRef.current.dispose();
+      }
+      if (explosionRef.current) {
+        explosionRef.current.dispose();
       }
       assetManagerRef.current.dispose();
       containerRef.current?.removeChild(renderer.domElement);
@@ -172,16 +279,25 @@ export default function Game() {
 
     if (aliveTeams.length === 1) {
       setWinningTeam(aliveTeams[0]);
+
+      // Trigger kill cam if we have a recent kill
+      if (killFeed.length > 0) {
+        const lastKill = killFeed[0];
+        // Get approximate position from world - we'll use center for now
+        // In a real scenario, you'd want to track the last kill position
+        activateKillCam({ x: 0, y: 10, z: 0 });
+      }
+
       setTimeout(() => {
         setGameState("finished");
-      }, 1500);
+      }, CONFIG.KILL_CAM.DURATION + 500);
     } else if (aliveTeams.length === 0) {
       // All teams died (unlikely but possible)
       setTimeout(() => {
         setGameState("finished");
       }, 1500);
     }
-  }, [teamStats, gameState]);
+  }, [teamStats, gameState, killFeed]);
 
   const handleTeamSelect = (team: TeamId) => {
     setSelectedTeam(team);
@@ -310,6 +426,62 @@ export default function Game() {
               Total: {Object.values(teamStats).reduce((a, b) => a + b, 0)}{" "}
               balloons
             </div>
+
+            {/* Kill Feed */}
+            {killFeed.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-neutral-700 relative">
+                <div className="text-xs font-bold text-neutral-400 mb-2">
+                  KILL FEED
+                </div>
+                <div className="relative">
+                  {killFeed.map((entry, index) => {
+                    const killerColor =
+                      CONFIG.TEAMS.COLORS[entry.killerTeam as TeamId];
+                    const victimColor =
+                      CONFIG.TEAMS.COLORS[entry.victimTeam as TeamId];
+                    const opacity = 1 - index * 0.15;
+
+                    return (
+                      <div
+                        key={entry.id}
+                        className="text-xs mb-1.5 flex items-center gap-1.5"
+                        style={{ opacity }}
+                      >
+                        <span
+                          className="inline-block w-2.5 h-2.5 rounded-sm"
+                          style={{
+                            backgroundColor:
+                              "#" + killerColor.toString(16).padStart(6, "0"),
+                          }}
+                        ></span>
+                        <span className="text-neutral-300 font-bold">
+                          Team {entry.killerTeam}
+                        </span>
+                        <span className="text-neutral-500 text-[10px]">→</span>
+                        <span
+                          className="inline-block w-2.5 h-2.5 rounded-sm"
+                          style={{
+                            backgroundColor:
+                              "#" + victimColor.toString(16).padStart(6, "0"),
+                          }}
+                        ></span>
+                        <span className="text-neutral-400">
+                          Team {entry.victimTeam}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {/* Gradient overlay */}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, transparent, rgb(38, 38, 38))",
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

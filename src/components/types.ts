@@ -82,3 +82,20 @@ export interface InputHandlers {
 export interface AssetLoader {
   loadModel: (team: number) => Promise<THREE.Group>;
 }
+
+// Kill feed types
+export interface KillFeedEntry {
+  id: string;
+  killerTeam: number;
+  victimTeam: number;
+  timestamp: number;
+}
+
+// Explosion types
+export interface ExplosionParticle {
+  position: THREE.Vector3;
+  velocity: THREE.Vector3;
+  mesh: THREE.Mesh;
+  lifetime: number;
+  maxLifetime: number;
+}

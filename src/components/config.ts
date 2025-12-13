@@ -29,7 +29,7 @@ export const CONFIG = {
     SCALE: 0.15,
     COLLISION_DISTANCE: 1,
     MOVEMENT_EASE: 0.015,
-    RETARGET_PROBABILITY: 0.35,
+    RETARGET_PROBABILITY: 0.75,
     RETARGET_DISTANCE_THRESHOLD: 0.01,
     PARTICLES_COUNT: 4800,
   },
@@ -49,9 +49,9 @@ export const CONFIG = {
     COUNT: 4,
     COLORS: {
       1: 0xff6188,
-      2: 0xfc9867,
+      //2: 0xfc9867,
       //2: 0xffd866,
-      //2: 0xa9dc76,
+      2: 0xa9dc76,
       3: 0x78dce8,
       4: 0xab9df2,
     },
@@ -95,6 +95,33 @@ export const CONFIG = {
     INITIAL: 1,
     DEAD: 0,
     FALL_TARGET_Y: -20,
+  },
+
+  // Kill feed settings
+  KILL_FEED: {
+    MAX_ENTRIES: 5,
+    ENTRY_DURATION: 5000, // 5 seconds
+  },
+
+  // Camera shake settings
+  CAMERA_SHAKE: {
+    INTENSITY: 0.5,
+    DURATION: 500,
+    DECAY: 0.95,
+  },
+
+  // Explosion settings
+  EXPLOSION: {
+    PARTICLE_COUNT: 10,
+    SPEED: 0.1,
+    LIFETIME: 400,
+    SIZE: 0.16,
+  },
+
+  // Kill cam settings
+  KILL_CAM: {
+    ZOOM_AMOUNT: 15,
+    DURATION: 2000,
   },
 };
 

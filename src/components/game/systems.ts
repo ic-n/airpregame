@@ -146,10 +146,19 @@ const updateEntityTransform = (
 // Collision System
 export const createCollisionSystem = (
   world: World,
-  entitiesRef: React.MutableRefObject<Map<number, EntityData>>
+  entitiesRef: React.MutableRefObject<Map<number, EntityData>>,
+  onKill?: (
+    killerTeam: number,
+    victimTeam: number,
+    position: { x: number; y: number; z: number }
+  ) => void,
+  onCollision?: (
+    position: { x: number; y: number; z: number },
+    color: number
+  ) => void
 ): System => {
   return () => {
-    const { Position, Health } = world.components;
+    const { Position, Health, Team } = world.components;
     const entities = query(world, [Position, Health]);
 
     for (let i = 0; i < entities.length; i++) {
@@ -172,7 +181,19 @@ export const createCollisionSystem = (
         );
 
         if (distance < CONFIG.ENTITY.COLLISION_DISTANCE) {
-          handleCollision(eid1, eid2, Health, entitiesRef);
+          const loser = Math.random() > 0.5 ? eid1 : eid2;
+          const winner = loser === eid1 ? eid2 : eid1;
+
+          handleCollision(
+            loser,
+            winner,
+            Health,
+            Team,
+            entitiesRef,
+            Position,
+            onKill,
+            onCollision
+          );
         }
       }
     }
@@ -180,17 +201,46 @@ export const createCollisionSystem = (
 };
 
 const handleCollision = (
-  eid1: number,
-  eid2: number,
+  loser: number,
+  winner: number,
   Health: { Value: Uint8Array },
-  entitiesRef: React.MutableRefObject<Map<number, EntityData>>
+  Team: { Value: Uint8Array },
+  entitiesRef: React.MutableRefObject<Map<number, EntityData>>,
+  Position: { x: Float32Array; y: Float32Array; z: Float32Array },
+  onKill?: (
+    killerTeam: number,
+    victimTeam: number,
+    position: { x: number; y: number; z: number }
+  ) => void,
+  onCollision?: (
+    position: { x: number; y: number; z: number },
+    color: number
+  ) => void
 ): void => {
-  const loser = Math.random() > 0.5 ? eid1 : eid2;
+  const wasAlive = Health.Value[loser] > CONFIG.HEALTH.DEAD;
   Health.Value[loser] -= 1;
 
   const entityData = entitiesRef.current.get(loser);
   if (entityData) {
     applyDamageFlash(entityData);
+  }
+
+  // Get collision position
+  const pos = getComponentValue(Position, loser);
+  const collisionPos = { x: pos.x, y: pos.y, z: pos.z };
+
+  // Trigger explosion effect at collision point
+  if (onCollision) {
+    const victimTeam = Team.Value[loser];
+    const color = CONFIG.TEAMS.COLORS[victimTeam as 1 | 2 | 3 | 4];
+    onCollision(collisionPos, color);
+  }
+
+  // If entity just died, trigger kill callback
+  if (wasAlive && Health.Value[loser] === CONFIG.HEALTH.DEAD && onKill) {
+    const killerTeam = Team.Value[winner];
+    const victimTeam = Team.Value[loser];
+    onKill(killerTeam, victimTeam, collisionPos);
   }
 };
 
@@ -221,7 +271,12 @@ export const createCameraSystem = (
   isDraggingRef: React.MutableRefObject<boolean>,
   cameraAngleRef: React.MutableRefObject<CameraAngles>,
   lastInteractionRef: React.MutableRefObject<number>,
-  cameraDistanceRef: React.MutableRefObject<number>
+  cameraDistanceRef: React.MutableRefObject<number>,
+  cameraShakeRef?: React.MutableRefObject<{
+    intensity: number;
+    duration: number;
+    elapsed: number;
+  }>
 ): System => {
   return () => {
     const timeSinceInteraction = Date.now() - lastInteractionRef.current;
@@ -231,21 +286,50 @@ export const createCameraSystem = (
       cameraAngleRef.current.theta += CONFIG.CAMERA.ROTATION_SPEED;
     }
 
-    updateCameraPosition(camera, cameraAngleRef.current, cameraDistanceRef);
+    updateCameraPosition(
+      camera,
+      cameraAngleRef.current,
+      cameraDistanceRef,
+      cameraShakeRef
+    );
   };
 };
 
 const updateCameraPosition = (
   camera: THREE.PerspectiveCamera,
   angles: CameraAngles,
-  cameraDistanceRef: React.MutableRefObject<number>
+  cameraDistanceRef: React.MutableRefObject<number>,
+  cameraShakeRef?: React.MutableRefObject<{
+    intensity: number;
+    duration: number;
+    elapsed: number;
+  }>
 ): void => {
   const { theta, phi } = angles;
   const radius = cameraDistanceRef.current;
 
-  const x = radius * Math.sin(phi) * Math.cos(theta);
-  const y = radius * Math.cos(phi);
-  const z = radius * Math.sin(phi) * Math.sin(theta);
+  let x = radius * Math.sin(phi) * Math.cos(theta);
+  let y = radius * Math.cos(phi);
+  let z = radius * Math.sin(phi) * Math.sin(theta);
+
+  // Apply camera shake
+  if (cameraShakeRef && cameraShakeRef.current.intensity > 0) {
+    const shake = cameraShakeRef.current;
+    const shakeAmount =
+      shake.intensity * Math.exp(-shake.elapsed / CONFIG.CAMERA_SHAKE.DURATION);
+
+    x += (Math.random() - 0.5) * shakeAmount;
+    y += (Math.random() - 0.5) * shakeAmount;
+    z += (Math.random() - 0.5) * shakeAmount;
+
+    shake.elapsed += 16; // ~60fps
+    shake.intensity *= CONFIG.CAMERA_SHAKE.DECAY;
+
+    if (shake.elapsed >= shake.duration || shake.intensity < 0.01) {
+      shake.intensity = 0;
+      shake.elapsed = 0;
+    }
+  }
 
   camera.position.set(x, y, z);
   camera.lookAt(0, CONFIG.CAMERA.LOOK_AT_Y, 0);

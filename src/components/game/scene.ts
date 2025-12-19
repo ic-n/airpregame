@@ -10,7 +10,7 @@ export const createScene = (): THREE.Scene => {
     CONFIG.VISUAL.FOG_FAR
   );
 
-  addGrid(scene);
+  if (false) addGrid(scene);
   return scene;
 };
 

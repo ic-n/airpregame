@@ -48,12 +48,10 @@ export const CONFIG = {
   TEAMS: {
     COUNT: 4,
     COLORS: {
-      1: 0xff6188,
-      2: 0xfc9867,
-      //2: 0xffd866,
-      //2: 0xa9dc76,
-      3: 0x78dce8,
-      4: 0xab9df2,
+      1: 0xf85725,
+      2: 0x03cea4,
+      3: 0x04aef1,
+      4: 0x846fec,
     },
     NAMES: {
       1: "Fire",
@@ -162,7 +160,7 @@ export const CONFIG = {
 
   // Kill cam settings
   KILL_CAM: {
-    ZOOM_AMOUNT: 15,
+    ZOOM_AMOUNT: 10,
     DURATION: 2000,
   },
 };

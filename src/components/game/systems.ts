@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { query, type QueryResult } from "bitecs";
 import type { World, EntityData, CameraAngles, System } from "../types";
-import { CONFIG } from "../config";
+import { CONFIG, type TeamId } from "../config";
 import {
   getComponentValue,
   setComponentValue,
@@ -236,7 +236,7 @@ const handleCollision = (
   // Trigger explosion effect at collision point
   if (onCollision) {
     const victimTeam = Team.Value[loser];
-    const color = CONFIG.TEAMS.COLORS[victimTeam as 1 | 2 | 3 | 4];
+    const color = CONFIG.TEAMS.VALUES[victimTeam as TeamId].COLOR;
     onCollision(collisionPos, color);
   }
 

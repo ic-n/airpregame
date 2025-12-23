@@ -45,13 +45,11 @@ export const createEntity = async (
   world: World,
   scene: THREE.Scene,
   entitiesRef: React.MutableRefObject<Map<number, EntityData>>,
+  team: TeamId,
   loadModel: (team: TeamId) => Promise<THREE.Group>,
   balloonIndex: number
 ): Promise<number> => {
   const eid = addEntity(world);
-  const team: TeamId = Math.round(
-    Math.random() * (CONFIG.TEAMS.COUNT - 1) + 1
-  ) as TeamId;
 
   const { startX, startY, startZ } = createEntityComponents(world, eid, team);
 

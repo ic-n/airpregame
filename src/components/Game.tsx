@@ -60,7 +60,7 @@ export default function Game() {
     theta: CONFIG.CAMERA.INITIAL_THETA,
     phi: CONFIG.CAMERA.INITIAL_PHI,
   });
-  const lastInteractionRef = useRef(Date.now());
+  const lastInteractionRef = useRef(0);
   const cameraDistanceRef = useRef(CONFIG.CAMERA.DISTANCE);
   const cameraShakeRef = useRef({ intensity: 0, duration: 0, elapsed: 0 });
   const killCamRef = useRef<{
@@ -156,19 +156,20 @@ export default function Game() {
 
     // Create systems
     const systems = [
-      createTimeSystem(world),
       createMovementSystem(world, entitiesRef),
       createCollisionSystem(world, entitiesRef, handleKill, handleCollision),
       createStatsSystem(world, setTeamStats),
-      createCameraSystem(
-        camera,
-        isDraggingRef,
-        cameraAngleRef,
-        lastInteractionRef,
-        cameraDistanceRef,
-        cameraShakeRef
-      ),
     ];
+
+    const timeSystem = createTimeSystem(world);
+    const camSystem = createCameraSystem(
+      camera,
+      isDraggingRef,
+      cameraAngleRef,
+      lastInteractionRef,
+      cameraDistanceRef,
+      cameraShakeRef
+    );
 
     // Setup input
     const inputHandlers = createInputHandlers(
@@ -186,10 +187,8 @@ export default function Game() {
     // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
+
       systems.forEach((system) => system());
-      if (hurricaneRef.current) {
-        hurricaneRef.current.update(world.time.delta);
-      }
       if (explosionRef.current) {
         explosionRef.current.update(world.time.delta);
       }
@@ -218,10 +217,50 @@ export default function Game() {
           killCamRef.current.active = false;
         }
       }
-
-      renderer.render(scene, camera);
     };
-    animate();
+
+    if (gameState == "playing") {
+      const addBalloon = async (num: number) => {
+        if (!worldRef.current || !sceneRef.current) return;
+
+        const team: TeamId = ((num % 4) + 1) as TeamId;
+
+        const eid = await createEntity(
+          worldRef.current,
+          sceneRef.current,
+          entitiesRef,
+          team,
+          (team: TeamId) => assetManagerRef.current.loadBalloonModel(team),
+          num
+        );
+      };
+
+      const startTheGame = async () => {
+        const promises = [];
+        for (let i = 0; i < CONFIG.ENTITY.INITIAL_COUNT; i++) {
+          promises.push(addBalloon(i));
+        }
+        await Promise.all(promises);
+
+        const cam = () => {
+          requestAnimationFrame(cam);
+
+          timeSystem();
+          camSystem();
+          if (hurricaneRef.current) {
+            hurricaneRef.current.update(world.time.delta);
+          }
+
+          renderer.render(scene, camera);
+        };
+        cam();
+
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        animate();
+      };
+      startTheGame();
+    }
 
     // Setup resize handler
     const cleanupResize = setupResizeHandler(camera, renderer);
@@ -245,33 +284,7 @@ export default function Game() {
       containerRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
     };
-  }, []);
-
-  const addBalloon = async (num: number) => {
-    if (!worldRef.current || !sceneRef.current) return;
-
-    const eid = await createEntity(
-      worldRef.current,
-      sceneRef.current,
-      entitiesRef,
-      (team: TeamId) => assetManagerRef.current.loadBalloonModel(team),
-      num
-    );
-  };
-
-  // Add initial entities
-  useEffect(() => {
-    if (!isLoading) {
-      const addInitialEntities = async () => {
-        const promises = [];
-        for (let i = 0; i < CONFIG.ENTITY.INITIAL_COUNT; i++) {
-          promises.push(addBalloon(i));
-        }
-        await Promise.all(promises);
-      };
-      addInitialEntities();
-    }
-  }, [isLoading]);
+  }, [gameState]);
 
   // Monitor game state
   useEffect(() => {
@@ -280,6 +293,10 @@ export default function Game() {
     const aliveTeams = Object.entries(teamStats)
       .filter(([_, count]) => count > 0)
       .map(([id, _]) => parseInt(id) as TeamId);
+
+    if (aliveTeams.length === 0) {
+      return;
+    }
 
     if (aliveTeams.length === 1) {
       setWinningTeam(aliveTeams[0]);
@@ -295,11 +312,6 @@ export default function Game() {
       setTimeout(() => {
         setGameState("finished");
       }, CONFIG.KILL_CAM.DURATION + 500);
-    } else if (aliveTeams.length === 0) {
-      // All teams died (unlikely but possible)
-      setTimeout(() => {
-        setGameState("finished");
-      }, 1500);
     }
   }, [teamStats, gameState, killFeed]);
 
@@ -343,10 +355,9 @@ export default function Game() {
             </p>
 
             <div className="space-y-3 mb-6">
-              {Object.entries(CONFIG.TEAMS.COLORS).map(([id, color]) => {
+              {Object.entries(CONFIG.TEAMS.VALUES).map(([id, tv]) => {
                 const teamId = parseInt(id) as TeamId;
                 const isSelected = selectedTeam === teamId;
-                const syndicateName = CONFIG.TEAMS.NAMES[teamId];
                 return (
                   <button
                     key={id}
@@ -359,14 +370,17 @@ export default function Game() {
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className="w-6 h-6 rounded"
+                        className="size-8 rounded-xl"
                         style={{
-                          backgroundColor:
-                            "#" + color.toString(16).padStart(6, "0"),
+                          boxShadow:
+                            "inset 0 0 8px 0 #" +
+                            tv.COLOR.toString(16).padStart(6, "0"),
                         }}
-                      ></span>
+                      >
+                        <img src={tv.LOGO} alt="" />
+                      </span>
                       <span className="text-xl font-bold">
-                        {syndicateName} Syndicate
+                        {tv.NAME} Syndicate
                       </span>
                       {isSelected && (
                         <span className="ml-auto text-green-400">✓</span>
@@ -397,11 +411,10 @@ export default function Game() {
         <div className="fixed top-4 left-4 z-10 bg-neutral-800 text-white px-4 py-2 rounded backdrop-blur-sm">
           <div>
             <div className="text-lg font-bold mb-2">Storm Protocol</div>
-            {Object.entries(CONFIG.TEAMS.COLORS).map(([id, color]) => {
+            {Object.entries(CONFIG.TEAMS.VALUES).map(([id, tv]) => {
               const teamId = parseInt(id) as TeamId;
               const alive = teamStats[teamId] || 0;
               const isYourTeam = teamId === selectedTeam;
-              const syndicateName = CONFIG.TEAMS.NAMES[teamId];
               return (
                 <div
                   key={id}
@@ -411,14 +424,17 @@ export default function Game() {
                 >
                   <div className="flex items-center">
                     <span
-                      className="inline-block w-3 h-3 mr-2 rounded-sm"
+                      className="size-6 inline-block rounded-lg mr-2"
                       style={{
-                        backgroundColor:
-                          "#" + color.toString(16).padStart(6, "0"),
+                        boxShadow:
+                          "inset 0 0 8px 0 #" +
+                          tv.COLOR.toString(16).padStart(6, "0"),
                       }}
-                    ></span>
+                    >
+                      <img src={tv.LOGO} alt="" />
+                    </span>
                     <span>
-                      {syndicateName}
+                      {tv.NAME}
                       {isYourTeam && (
                         <span className="ml-1 text-green-400 text-xs">★</span>
                       )}
@@ -444,9 +460,9 @@ export default function Game() {
                 <div className="relative">
                   {killFeed.map((entry, index) => {
                     const killerColor =
-                      CONFIG.TEAMS.COLORS[entry.killerTeam as TeamId];
+                      CONFIG.TEAMS.VALUES[entry.killerTeam as TeamId].COLOR;
                     const victimColor =
-                      CONFIG.TEAMS.COLORS[entry.victimTeam as TeamId];
+                      CONFIG.TEAMS.VALUES[entry.victimTeam as TeamId].COLOR;
                     const opacity = 1 - index * 0.15;
 
                     return (
@@ -456,7 +472,7 @@ export default function Game() {
                         style={{ opacity }}
                       >
                         <span
-                          className="inline-block w-2.5 h-2.5 rounded-sm"
+                          className="inline-block w-2.5 h-2.5 rounded-full"
                           style={{
                             backgroundColor:
                               "#" + killerColor.toString(16).padStart(6, "0"),
@@ -467,7 +483,7 @@ export default function Game() {
                         </span>
                         <span className="text-neutral-500 text-[10px]">→</span>
                         <span
-                          className="inline-block w-2.5 h-2.5 rounded-sm"
+                          className="inline-block w-2.5 h-2.5 rounded-full"
                           style={{
                             backgroundColor:
                               "#" + victimColor.toString(16).padStart(6, "0"),
@@ -480,13 +496,15 @@ export default function Game() {
                     );
                   })}
                   {/* Gradient overlay */}
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, transparent, rgb(38, 38, 38))",
-                    }}
-                  ></div>
+                  {killFeed.length > 4 && (
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom, transparent, rgb(38, 38, 38))",
+                      }}
+                    ></div>
+                  )}
                 </div>
               </div>
             )}
@@ -525,17 +543,22 @@ export default function Game() {
                     <span className="text-neutral-400">Your Syndicate:</span>
                     <div className="flex items-center gap-2">
                       <span
-                        className="w-4 h-4 rounded"
+                        className="size-8 rounded-xl"
                         style={{
-                          backgroundColor:
-                            "#" +
-                            CONFIG.TEAMS.COLORS[selectedTeam!]
-                              .toString(16)
-                              .padStart(6, "0"),
+                          boxShadow:
+                            "inset 0 0 8px 0 #" +
+                            CONFIG.TEAMS.VALUES[selectedTeam!].COLOR.toString(
+                              16
+                            ).padStart(6, "0"),
                         }}
-                      ></span>
+                      >
+                        <img
+                          src={CONFIG.TEAMS.VALUES[selectedTeam!].LOGO}
+                          alt=""
+                        />
+                      </span>
                       <span className="font-bold">
-                        {CONFIG.TEAMS.NAMES[selectedTeam!]}
+                        {CONFIG.TEAMS.VALUES[selectedTeam!].NAME}
                       </span>
                     </div>
                   </div>
@@ -543,17 +566,22 @@ export default function Game() {
                     <span className="text-neutral-400">Winner:</span>
                     <div className="flex items-center gap-2">
                       <span
-                        className="w-4 h-4 rounded"
+                        className="size-8 rounded-xl"
                         style={{
-                          backgroundColor:
-                            "#" +
-                            CONFIG.TEAMS.COLORS[winningTeam]
-                              .toString(16)
-                              .padStart(6, "0"),
+                          boxShadow:
+                            "inset 0 0 8px 0 #" +
+                            CONFIG.TEAMS.VALUES[winningTeam!].COLOR.toString(
+                              16
+                            ).padStart(6, "0"),
                         }}
-                      ></span>
+                      >
+                        <img
+                          src={CONFIG.TEAMS.VALUES[winningTeam!].LOGO}
+                          alt=""
+                        />
+                      </span>
                       <span className="font-bold">
-                        {CONFIG.TEAMS.NAMES[winningTeam]}
+                        {CONFIG.TEAMS.VALUES[winningTeam].NAME}
                       </span>
                     </div>
                   </div>
@@ -584,6 +612,18 @@ export default function Game() {
       )}
 
       <div className="fixed bottom-4 left-4 z-10 bg-neutral-800 text-white px-3 py-2 rounded backdrop-blur-sm text-xs">
+        <div className="">
+          - Visit our website{" "}
+          <a className="text-blue-500" href="https://solrover.xyz">
+            solrover.xyz
+          </a>
+        </div>
+        <div className="">
+          - Learn more about the game at{" "}
+          <a className="text-blue-500" href="https://indie.fun/storm-solrover">
+            indie.fun/storm-solrover
+          </a>
+        </div>
         <div>- Drag to rotate camera</div>
         <div>- Balloons fight when they collide</div>
       </div>

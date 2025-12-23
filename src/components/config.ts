@@ -25,12 +25,12 @@ export const CONFIG = {
 
   // Entity settings
   ENTITY: {
-    INITIAL_COUNT: 4 * 8,
+    INITIAL_COUNT: 4 * 4,
     SCALE: 0.15,
     COLLISION_DISTANCE: 1,
-    MOVEMENT_EASE: 0.015,
-    RETARGET_PROBABILITY: 0.75,
-    RETARGET_DISTANCE_THRESHOLD: 0.01,
+    MOVEMENT_EASE: 0.007,
+    RETARGET_PROBABILITY: 0.65,
+    RETARGET_DISTANCE_THRESHOLD: 0.005,
     PARTICLES_COUNT: 4800,
   },
 
@@ -47,17 +47,11 @@ export const CONFIG = {
   // Team settings
   TEAMS: {
     COUNT: 4,
-    COLORS: {
-      1: 0xf85725,
-      2: 0x03cea4,
-      3: 0x04aef1,
-      4: 0x846fec,
-    },
-    NAMES: {
-      1: "Fire",
-      2: "Earth",
-      3: "Water",
-      4: "Air",
+    VALUES: {
+      1: { COLOR: 0xf85725, NAME: "Fire", LOGO: "/rect715.svg" },
+      2: { COLOR: 0x03cea4, NAME: "Earth", LOGO: "/rect717.svg" },
+      3: { COLOR: 0x04aef1, NAME: "Water", LOGO: "/rect718.svg" },
+      4: { COLOR: 0x846fec, NAME: "Air", LOGO: "/rect716.svg" },
     },
   },
 

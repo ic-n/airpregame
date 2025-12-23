@@ -33,7 +33,7 @@ export class AssetManager {
   }
 
   private applyTeamColor(model: THREE.Group, team: TeamId): void {
-    const teamColor = new THREE.Color(CONFIG.TEAMS.COLORS[team]);
+    const teamColor = new THREE.Color(CONFIG.TEAMS.VALUES[team].COLOR);
 
     model.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
@@ -73,7 +73,7 @@ export class AssetManager {
 
   private createFallbackBalloon(team: TeamId): THREE.Group {
     const group = new THREE.Group();
-    const teamColor = CONFIG.TEAMS.COLORS[team];
+    const teamColor = CONFIG.TEAMS.VALUES[team].COLOR;
 
     // Balloon envelope
     const balloonGeometry = new THREE.SphereGeometry(
